@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
+import { OrderEditDialog } from "@/components/OrderEditDialog";
+import { Search, Filter, Eye, Edit, MoreHorizontal } from "lucide-react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -18,220 +19,193 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Filter, Download, Eye, Edit } from "lucide-react";
-import { MetricCard } from "@/components/MetricCard";
-import { ShoppingCart, Clock, CheckCircle, XCircle } from "lucide-react";
 
-// Mock data
-const ordersData = [
+const mockOrders = [
   {
-    id: "#1234",
-    customer: "John Doe",
-    email: "john@example.com",
-    total: "$129.00",
-    status: "Delivered",
-    date: "2024-09-25",
-    items: 3,
+    id: "001",
+    customer: "Fatma Haggui",
+    email: "fatma@example.com",
+    phone: "23188730",
+    phone2: "",
+    address: "Cité El moez, route Gabes, sfax",
+    city: "Sfax",
+    product: "Ceinture amincissante",
+    quantity: 1,
+    price: 39,
+    total: 46,
+    deliveryFee: 0,
+    shippingFee: 7,
+    status: "En attente",
+    date: "2024-01-15",
+    deliveryCompany: "JETPACK",
+    privateNote: "",
+    clientNote: "",
   },
   {
-    id: "#1235", 
-    customer: "Jane Smith",
-    email: "jane@example.com",
-    total: "$89.50",
-    status: "Processing",
-    date: "2024-09-25",
-    items: 2,
+    id: "002", 
+    customer: "Ahmed Ben Ali",
+    email: "ahmed@example.com",
+    phone: "98765432",
+    phone2: "12345678",
+    address: "Avenue Habib Bourguiba, Tunis",
+    city: "Tunis",
+    product: "Legging avec crochet",
+    quantity: 2,
+    price: 44,
+    total: 95,
+    deliveryFee: 0,
+    shippingFee: 7,
+    status: "Confirmée",
+    date: "2024-01-14",
+    deliveryCompany: "DHL Express",
+    privateNote: "Client VIP",
+    clientNote: "Livraison rapide demandée",
   },
   {
-    id: "#1236",
-    customer: "Mike Johnson", 
-    email: "mike@example.com",
-    total: "$199.99",
-    status: "Shipped",
-    date: "2024-09-24",
-    items: 1,
+    id: "003",
+    customer: "Sarra Mansouri",
+    email: "sarra@example.com", 
+    phone: "55512345",
+    phone2: "",
+    address: "Route de Sousse, Monastir",
+    city: "Monastir",
+    product: "Bluetooth Speaker",
+    quantity: 1,
+    price: 79,
+    total: 86,
+    deliveryFee: 0,
+    shippingFee: 7,
+    status: "Livrée",
+    date: "2024-01-13",
+    deliveryCompany: "PosteTunisie",
+    privateNote: "",
+    clientNote: "",
   },
   {
-    id: "#1237",
-    customer: "Sarah Wilson",
-    email: "sarah@example.com", 
-    total: "$45.00",
-    status: "Pending",
-    date: "2024-09-24",
-    items: 4,
-  },
-  {
-    id: "#1238",
-    customer: "Tom Brown",
-    email: "tom@example.com",
-    total: "$299.99",
-    status: "Cancelled",
-    date: "2024-09-23",
-    items: 2,
+    id: "004",
+    customer: "Karim Trabelsi",
+    email: "karim@example.com",
+    phone: "44456789",
+    phone2: "",
+    address: "Centre ville, Sfax",
+    city: "Sfax",
+    product: "Phone Case",
+    quantity: 3,
+    price: 20,
+    total: 67,
+    deliveryFee: 0,
+    shippingFee: 7,
+    status: "Retournée",
+    date: "2024-01-12",
+    deliveryCompany: "Aramex",
+    privateNote: "Client difficile",
+    clientNote: "",
   },
 ];
 
 export default function Orders() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [orders, setOrders] = useState(mockOrders);
 
-  const filteredOrders = ordersData.filter((order) => {
-    const matchesSearch = 
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || order.status.toLowerCase() === statusFilter.toLowerCase();
-    
-    return matchesSearch && matchesStatus;
-  });
+  const handleEditOrder = (order: any) => {
+    setSelectedOrder(order);
+    setIsEditDialogOpen(true);
+  };
 
-  const orderStats = {
-    total: ordersData.length,
-    pending: ordersData.filter(o => o.status === "Pending").length,
-    processing: ordersData.filter(o => o.status === "Processing").length,
-    delivered: ordersData.filter(o => o.status === "Delivered").length,
+  const handleSaveOrder = (updatedOrder: any) => {
+    setOrders(orders.map(order => 
+      order.id === updatedOrder.id ? updatedOrder : order
+    ));
   };
 
   return (
-    <div className="flex-1 space-y-6 p-6 bg-background">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Orders</h1>
-          <p className="text-muted-foreground">Manage and track all your store orders</p>
-        </div>
-        <Button className="bg-gradient-primary hover:bg-primary-hover shadow-primary">
-          <Download className="w-4 h-4 mr-2" />
-          Export Orders
-        </Button>
+    <div className="p-6 space-y-6 bg-background min-h-screen">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-foreground">Orders</h1>
+        <p className="text-muted-foreground">
+          Manage and track all your store orders
+        </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Total Orders"
-          value={orderStats.total.toString()}
-          subtitle="All time orders"
-          icon={ShoppingCart}
-        />
-        <MetricCard
-          title="Pending Orders"
-          value={orderStats.pending.toString()}
-          subtitle="Awaiting processing"
-          icon={Clock}
-          variant="warning"
-        />
-        <MetricCard
-          title="Processing"
-          value={orderStats.processing.toString()}
-          subtitle="Currently processing"
-          icon={ShoppingCart}
-          variant="info"
-        />
-        <MetricCard
-          title="Delivered"
-          value={orderStats.delivered.toString()}
-          subtitle="Successfully delivered"
-          icon={CheckCircle}
-          variant="success"
-        />
-      </div>
-
-      {/* Filters and Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-foreground">Order Management</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search orders, customers, or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-foreground">Recent Orders</CardTitle>
+            <div className="flex items-center space-x-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search orders..."
+                  className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+              <Button variant="outline" className="border-border hover:bg-secondary">
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+              </Button>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Orders Table */}
-          <div className="rounded-lg border border-border overflow-hidden">
+          </CardHeader>
+          <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="font-semibold">Order ID</TableHead>
-                  <TableHead className="font-semibold">Customer</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold">Total</TableHead>
-                  <TableHead className="font-semibold">Items</TableHead>
-                  <TableHead className="font-semibold">Date</TableHead>
-                  <TableHead className="font-semibold text-right">Actions</TableHead>
+                <TableRow className="border-border">
+                  <TableHead className="text-muted-foreground">Order</TableHead>
+                  <TableHead className="text-muted-foreground">Customer</TableHead>
+                  <TableHead className="text-muted-foreground">Product</TableHead>
+                  <TableHead className="text-muted-foreground">Amount</TableHead>
+                  <TableHead className="text-muted-foreground">Status</TableHead>
+                  <TableHead className="text-muted-foreground">Date</TableHead>
+                  <TableHead className="text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredOrders.map((order) => (
-                  <TableRow key={order.id} className="hover:bg-card-hover">
-                    <TableCell className="font-medium text-primary">
-                      {order.id}
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium text-foreground">{order.customer}</div>
-                        <div className="text-sm text-muted-foreground">{order.email}</div>
-                      </div>
-                    </TableCell>
+                {orders.map((order) => (
+                  <TableRow key={order.id} className="border-border hover:bg-secondary/50">
+                    <TableCell className="text-foreground font-medium">#{order.id}</TableCell>
+                    <TableCell className="text-foreground">{order.customer}</TableCell>
+                    <TableCell className="text-foreground">{order.product}</TableCell>
+                    <TableCell className="text-foreground">{order.total} TND</TableCell>
                     <TableCell>
                       <StatusBadge status={order.status} />
                     </TableCell>
-                    <TableCell className="font-semibold text-foreground">
-                      {order.total}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {order.items} items
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(order.date).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
+                    <TableCell className="text-muted-foreground">{order.date}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-secondary">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="bg-card border-border">
+                          <DropdownMenuItem className="hover:bg-secondary cursor-pointer">
+                            <Eye className="mr-2 h-4 w-4" />
+                            <span>View</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="hover:bg-secondary cursor-pointer"
+                            onClick={() => handleEditOrder(order)}
+                          >
+                            <Edit className="mr-2 h-4 w-4" />
+                            <span>Edit</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </CardContent>
+        </Card>
+      </div>
 
-          {filteredOrders.length === 0 && (
-            <div className="text-center py-8">
-              <XCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No orders found matching your criteria.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <OrderEditDialog
+        order={selectedOrder}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSave={handleSaveOrder}
+      />
     </div>
   );
 }
